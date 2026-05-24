@@ -12,6 +12,7 @@
 ## Tested System
 
 | | |
+|---|---|
 | **Distro** | CachyOS |
 | **Kernel** | 7.0.9-1-cachyos |
 | **Desktop / Compositor** | KDE Plasma |
