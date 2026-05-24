@@ -66,9 +66,9 @@ sudo reboot
 
 ## Fix 2 — CPU Governor (GameMode)
 
-**Fixes: Periodic EKG-like stutter after a few minutes**
+> ⚠️ **Experimental** — This fix may not fully resolve the "EKG Frametime" issue on all systems. The name comes from the frametime graph in MangoHUD, which produces a pattern that resembles an EKG monitor — regular spikes between near-zero and high values. Results may vary.
 
-With the CPU governor set to `powersave`, the CPU drops to low clock speeds between frames and boosts back up for the next frame. This frequency bounce produces a regular EKG pattern (0ms / 64ms) in the frametimes. GameMode automatically sets the governor to `performance` while the game is running and restores it afterwards.
+**What causes it:** With the CPU governor set to `powersave`, the CPU drops to low clock speeds between frames and boosts back up for the next frame. This frequency bounce produces the EKG pattern (0ms / 64ms) in the frametimes. GameMode automatically sets the governor to `performance` while the game is running and restores it afterwards.
 
 **Step 1 — Enable GameMode daemon (survives reboots):**
 
@@ -76,14 +76,20 @@ With the CPU governor set to `powersave`, the CPU drops to low clock speeds betw
 systemctl --user enable --now gamemoded
 ```
 
-**Step 2 — Create GameMode config:**
+**Step 2 — Add paul to the gamemode group (required for governor switching):**
+
+```bash
+sudo usermod -aG gamemode $USER
+```
+
+Log out and back in (or reboot) for the group change to take effect.
+
+**Step 3 — Create GameMode config:**
 
 ```bash
 cat > ~/.config/gamemode.ini << 'EOF'
-[gpu]
-apply_gpu_optimisations=accept-responsibility
-gpu_device=0
-nv_powermizer_mode=1
+[general]
+renice=0
 
 [cpu]
 park_cores=no
@@ -91,11 +97,20 @@ pin_cores=yes
 EOF
 ```
 
+**Step 4 — Verify GameMode works correctly:**
+
+```bash
+gamemoded -t 2>&1 | grep -E "Passed|Failed"
+```
+
+All entries should show `Passed`.
+
 | Option | Effect |
 |---|---|
 | `CPU Governor → performance` | GameMode automatically sets the governor to `performance` while gaming — then back to `powersave`. |
-| `nv_powermizer_mode=1` | Sets NVIDIA to Maximum Performance Mode during gaming — prevents GPU P-state jumps. |
 | `pin_cores=yes` | Prevents the kernel from migrating game threads between CPU cores. |
+
+> **Note:** `gamemoderun` must be placed **after** the `--` inside Gamescope in the launch options (see below), not before it. Placing it before Gamescope causes it to lose its DBus connection due to Gamescope's environment isolation, meaning GameMode never actually activates.
 
 ---
 
@@ -104,7 +119,7 @@ EOF
 Right-click FH6 → Properties → Launch Options:
 
 ```
-PULSE_LATENCY_MSEC=60 PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CACHE=1 PROTON_NVIDIA_LIBS=1 PROTON_USE_NTSYNC=1 PROTON_ENABLE_NVAPI=1 PROTON_ENABLE_NGX_UPDATER=1 PROTON_VKD3D_HEAP=1 VKD3D_CONFIG=descriptor_heap gamemoderun gamescope -f -W 1920 -H 1080 -r 180 --mangoapp --force-grab-cursor --adaptive-sync -- %command%
+PULSE_LATENCY_MSEC=60 PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CACHE=1 PROTON_NVIDIA_LIBS=1 PROTON_USE_NTSYNC=1 PROTON_ENABLE_NVAPI=1 PROTON_ENABLE_NGX_UPDATER=1 PROTON_VKD3D_HEAP=1 VKD3D_CONFIG=descriptor_heap gamescope -f -W 1920 -H 1080 -r 180 --mangoapp --force-grab-cursor --adaptive-sync -- gamemoderun %command%
 ```
 
 > **`PROTON_USE_NTSYNC=1`** requires a kernel with NTsync support. Without it the argument is silently ignored — no errors.
