@@ -23,6 +23,10 @@
 | **NVIDIA Driver** | 595.71.05 |
 | **Proton** | CachyOS-Proton 11.0 |
 
+> **Graphics settings:** All testing was done on the **Medium** preset with no individual settings changed (e.g. Environment Texture Quality or similar were left at their preset defaults).
+>
+> **Ray tracing:** Ray tracing either does not work at all or only on the lowest setting. This is a known limitation on Linux and is not addressed by this guide.
+
 ---
 
 ## Fix 1 — NVIDIA Power Management
