@@ -3,7 +3,7 @@
 > All issues documented in this guide were diagnosed and resolved by **[Claude](https://claude.ai)** (Anthropic's AI) through systematic analysis of system logs, GPU error codes, and Steam configuration — no manual research required.
 
 > **Disclaimer**
-> This guide is based on my personal setup and experience. I cannot guarantee that any of these fixes will work for everyone. Results may vary depending on your hardware, drivers, distro, and game version. These fixes aim to make the game **more playable** on Linux — they do not resolve every issue, as the game was not officially developed for Linux.
+> This guide is based on personal experience. There is no guarantee that any of these fixes will work for everyone. Results may vary depending on your hardware, drivers, distro, and game version. These fixes aim to make the game **more playable** on Linux — they do not resolve every issue, as the game was not officially developed for Linux.
 >
 > **Recommendation:** Capping your FPS to 60 results in significantly more consistent frametimes. In an arcade racer like Forza Horizon the difference to higher framerates is barely noticeable, while stability improves considerably.
 
@@ -66,9 +66,9 @@ sudo reboot
 
 ## Fix 2 — CPU Governor (GameMode)
 
-> ⚠️ **Experimental** — This fix may not fully resolve the "EKG Frametime" issue on all systems. The name comes from the frametime graph in MangoHUD, which produces a pattern that resembles an EKG monitor — regular spikes between near-zero and high values. Results may vary.
+> ⚠️ **Experimental** — This fix may not fully resolve the "EKG Frametime" issue on all systems. The name "EKG Frametime" comes from the frametime graph in MangoHUD, which produces a pattern that resembles an EKG monitor — regular spikes alternating between near-zero and high values. Results may vary.
 
-**What causes it:** With the CPU governor set to `powersave`, the CPU drops to low clock speeds between frames and boosts back up for the next frame. This frequency bounce produces the EKG pattern (0ms / 64ms) in the frametimes. GameMode automatically sets the governor to `performance` while the game is running and restores it afterwards.
+**What causes it:** When the CPU governor is set to `powersave`, the CPU drops to low clock speeds between frames and boosts back up for the next frame. This frequency bounce produces the EKG pattern in the frametimes. GameMode automatically switches the governor to `performance` while the game is running and restores it afterwards.
 
 **Step 1 — Enable GameMode daemon (survives reboots):**
 
@@ -110,7 +110,7 @@ All entries should show `Passed`.
 | `CPU Governor → performance` | GameMode automatically sets the governor to `performance` while gaming — then back to `powersave`. |
 | `pin_cores=yes` | Prevents the kernel from migrating game threads between CPU cores. |
 
-> **Note:** `gamemoderun` must be placed **after** the `--` inside Gamescope in the launch options (see below), not before it. Placing it before Gamescope causes it to lose its DBus connection due to Gamescope's environment isolation, meaning GameMode never actually activates.
+> **Note:** `gamemoderun` must be placed **after** the `--` inside the Gamescope command in the launch options (see below), not before it. Placing it before Gamescope causes it to lose its DBus connection due to Gamescope's environment isolation, meaning GameMode never actually activates.
 
 ---
 
@@ -119,7 +119,7 @@ All entries should show `Passed`.
 Right-click FH6 → Properties → Launch Options:
 
 ```
-PULSE_LATENCY_MSEC=60 PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CACHE=1 PROTON_NVIDIA_LIBS=1 PROTON_USE_NTSYNC=1 PROTON_ENABLE_NVAPI=1 PROTON_ENABLE_NGX_UPDATER=1 PROTON_VKD3D_HEAP=1 VKD3D_CONFIG=descriptor_heap gamescope -f -W 1920 -H 1080 -r 180 --mangoapp --force-grab-cursor --adaptive-sync -- gamemoderun %command%
+PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CACHE=1 PROTON_NVIDIA_LIBS=1 PROTON_USE_NTSYNC=1 PROTON_ENABLE_NVAPI=1 PROTON_ENABLE_NGX_UPDATER=1 PROTON_VKD3D_HEAP=1 VKD3D_CONFIG=descriptor_heap gamescope -f -W 1920 -H 1080 -r 180 --mangoapp --force-grab-cursor --adaptive-sync -- gamemoderun %command%
 ```
 
 > **`PROTON_USE_NTSYNC=1`** requires a kernel with NTsync support. Without it the argument is silently ignored — no errors.
