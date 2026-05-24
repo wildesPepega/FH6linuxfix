@@ -328,3 +328,87 @@ The first command makes the change permanent. The second applies it immediately 
 ```
 
 It is safe to back this file up. If you reinstall the game or switch Proton versions, copying your cache back can save hours of re-warming time. Caches are GPU-architecture-specific — a cache from another RTX 30-series user may work, but is not guaranteed.
+
+### Shader Cache Backup Script
+
+To make backing up and restoring the cache easier, you can use this script. It shows the current cache size and lets you create or restore a timestamped backup with a single keypress.
+
+**Create the script** anywhere you like, e.g.:
+
+```bash
+nano fh6-shader-warmup.sh
+```
+
+Paste the following:
+
+```bash
+#!/bin/bash
+# FH6 VKD3D Shader Cache Warmup
+# Run this before playing to check cache status and optionally back it up.
+
+if [ "$EUID" -eq 0 ]; then
+    echo "Do not run this script with sudo. Run it as your normal user."
+    exit 1
+fi
+
+CACHE_DIR="$HOME/.local/share/Steam/steamapps/shadercache/2483190/VKD3D_shader_cache"
+CACHE_FILE="$CACHE_DIR/vkd3d-proton.forzahorizon6.exe.cache"
+BACKUP_DIR="$HOME/.local/share/fh6-shader-backup"
+
+echo "=== FH6 VKD3D Shader Cache ==="
+if [ -f "$CACHE_FILE" ]; then
+    SIZE=$(du -sh "$CACHE_FILE" | cut -f1)
+    MODIFIED=$(stat -c '%y' "$CACHE_FILE" | cut -d'.' -f1)
+    echo "Cache size:     $SIZE"
+    echo "Last modified:  $MODIFIED"
+else
+    echo "No cache found at $CACHE_FILE"
+fi
+
+echo ""
+echo "Options:"
+echo "  1) Backup current cache"
+echo "  2) Restore last backup"
+echo "  3) Exit"
+read -p "Choice: " choice
+
+case $choice in
+    1)
+        mkdir -p "$BACKUP_DIR"
+        cp "$CACHE_FILE" "$BACKUP_DIR/vkd3d-cache-$(date +%Y%m%d-%H%M%S).bak"
+        echo "Backed up to $BACKUP_DIR"
+        ;;
+    2)
+        LATEST=$(ls -t "$BACKUP_DIR"/*.bak 2>/dev/null | head -1)
+        if [ -z "$LATEST" ]; then
+            echo "No backup found."
+        else
+            cp "$LATEST" "$CACHE_FILE"
+            echo "Restored: $LATEST"
+            echo "Cache size: $(du -sh "$CACHE_FILE" | cut -f1)"
+        fi
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+```
+
+Make it executable:
+
+```bash
+chmod +x fh6-shader-warmup.sh
+```
+
+Run it (without sudo):
+
+```bash
+bash fh6-shader-warmup.sh
+```
+
+**What it does:**
+- Shows the current size of your shader cache and when it was last written to — useful for tracking how much the cache has grown over time
+- **Option 1 — Backup:** Saves a timestamped copy of the cache to `~/.local/share/fh6-shader-backup/`. Run this after a long session once the game has built up a good cache. If something later corrupts or resets the cache, you can restore from this backup instead of starting from scratch
+- **Option 2 — Restore:** Copies the most recent backup back into the cache directory, instantly restoring your previously compiled shaders
+
+> **Do not run with sudo.** The script accesses files in your home directory. Running it as root redirects `$HOME` to `/root` and the cache will not be found.
