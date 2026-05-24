@@ -76,7 +76,7 @@ sudo reboot
 systemctl --user enable --now gamemoded
 ```
 
-**Step 2 — Add paul to the gamemode group (required for governor switching):**
+**Step 2 — Add your user to the gamemode group (required for governor switching):**
 
 ```bash
 sudo usermod -aG gamemode $USER
