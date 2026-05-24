@@ -137,3 +137,5 @@ MANGOHUD=1 PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CAC
 > **Adaptive Sync (FreeSync / G-Sync):**
 > - **Monitor supports Adaptive Sync:** Enable VRR in your display settings (KDE: System Settings → Display → Variable Refresh Rate → Automatic), turn in-game VSync **off** — Gamescope handles frame pacing.
 > - **No Adaptive Sync:** Remove `--adaptive-sync` from the launch options and turn in-game VSync **on**.
+
+> **Black screen on launch:** If the game starts but the screen stays black, pressing **Alt+Enter** often fixes it.
