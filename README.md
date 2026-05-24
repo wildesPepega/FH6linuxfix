@@ -123,6 +123,8 @@ MANGOHUD=1 PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CAC
 ```
 
 > **`--mangoapp` vs `MANGOHUD=1`:** Do **not** use `--mangoapp` in Gamescope. In Gamescope's mangoapp mode the overlay runs as a separate process synchronized with Gamescope's frame output — meaning it samples 60 times per second regardless of any `update_rate` config, consuming ~30% of a CPU core and causing periodic frametime spikes (the "EKG Frametime"). `MANGOHUD=1` injects directly into the game process, respects the config, and uses minimal CPU.
+>
+> **Known issue:** The combination of Gamescope and `--mangoapp` has reportedly caused similar or identical frametime problems for other users across different games and setups — this is not specific to Forza Horizon 6.
 
 > **`PROTON_USE_NTSYNC=1`** requires a kernel with NTsync support. Without it the argument is silently ignored — no errors.
 
