@@ -1,5 +1,7 @@
 # Forza Horizon 6 – Linux Fix Guide
 
+> All issues documented in this guide were diagnosed and resolved by **[Claude](https://claude.ai)** (Anthropic's AI) through systematic analysis of system logs, GPU error codes, and Steam configuration — no manual research required.
+
 > **Disclaimer**
 > This guide is based on my personal setup and experience. I cannot guarantee that any of these fixes will work for everyone. Results may vary depending on your hardware, drivers, distro, and game version. These fixes aim to make the game **more playable** on Linux — they do not resolve every issue, as the game was not officially developed for Linux.
 >
@@ -66,7 +68,7 @@ sudo reboot
 
 **Fixes: Periodic EKG-like stutter after a few minutes**
 
-With the CPU governor set to `powersave`, the Ryzen 9 5900X drops to ~1.5 GHz between frames and boosts back to ~4.5 GHz for the next frame. This frequency bounce produces a regular EKG pattern (0ms / 64ms) in the frametimes. GameMode automatically sets the governor to `performance` while the game is running and restores it afterwards.
+With the CPU governor set to `powersave`, the CPU drops to low clock speeds between frames and boosts back up for the next frame. This frequency bounce produces a regular EKG pattern (0ms / 64ms) in the frametimes. GameMode automatically sets the governor to `performance` while the game is running and restores it afterwards.
 
 **Step 1 — Enable GameMode daemon (survives reboots):**
 
@@ -94,42 +96,6 @@ EOF
 | `CPU Governor → performance` | GameMode automatically sets the governor to `performance` while gaming — then back to `powersave`. |
 | `nv_powermizer_mode=1` | Sets NVIDIA to Maximum Performance Mode during gaming — prevents GPU P-state jumps. |
 | `pin_cores=yes` | Prevents the kernel from migrating game threads between CPU cores. |
-
----
-
-## Fix 3 — Audio (PipeWire + GoXLR / USB Audio)
-
-**Fixes: Audio dropouts and crackling**
-
-Two separate system-level issues — not specific to Forza Horizon 6. Any Proton game with a USB audio interface could have the same problems.
-
-**Issue 1 — USB Autosuspend:**
-PipeWire suspends USB audio devices when no audio is playing. When the game plays a sound and the device needs to wake up → dropout or crackling.
-
-Replace `1220` and `8fe4` with your device's vendor and product ID (find it with `lsusb`):
-
-```bash
-echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="1220", ATTR{idProduct}=="8fe4", ATTR{power/autosuspend}="-1"' \
-| sudo tee /etc/udev/rules.d/99-usb-audio-nosuspend.rules
-
-sudo udevadm control --reload-rules
-sudo udevadm trigger --attr-match=idVendor=1220
-```
-
-**Issue 2 — PipeWire quantum too high:**
-The default `min-quantum=1024` is too large for Wine/Proton audio. Wine requests smaller buffers, PipeWire rejects them → buffer mismatch → crackling.
-
-```bash
-mkdir -p ~/.config/pipewire/pipewire.conf.d
-cat > ~/.config/pipewire/pipewire.conf.d/10-gaming.conf << 'EOF'
-context.properties = {
-    default.clock.min-quantum = 32
-    default.clock.quantum     = 512
-}
-EOF
-
-systemctl --user restart pipewire pipewire-pulse
-```
 
 ---
 
