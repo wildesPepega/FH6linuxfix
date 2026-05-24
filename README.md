@@ -12,7 +12,6 @@
 ## Tested System
 
 | | |
-|---|---|
 | **Distro** | CachyOS |
 | **Kernel** | 7.0.9-1-cachyos |
 | **Desktop / Compositor** | KDE Plasma |
@@ -66,9 +65,9 @@ sudo reboot
 
 ## Fix 2 — CPU Governor (GameMode)
 
-> ⚠️ **Experimental** — This fix may not fully resolve the "EKG Frametime" issue on all systems. The name "EKG Frametime" comes from the frametime graph in MangoHUD, which produces a pattern that resembles an EKG monitor — regular spikes alternating between near-zero and high values. Results may vary.
+> **Note:** This fix does **not** resolve the "EKG Frametime" issue (the name comes from the frametime graph in MangoHUD resembling an EKG monitor — regular spikes alternating between near-zero and high values). That was caused by `--mangoapp` in Gamescope — see the launch options section. However, GameMode still provides real benefits and is worth keeping.
 
-**What causes it:** When the CPU governor is set to `powersave`, the CPU drops to low clock speeds between frames and boosts back up for the next frame. This frequency bounce produces the EKG pattern in the frametimes. GameMode automatically switches the governor to `performance` while the game is running and restores it afterwards.
+**What it does:** When the CPU governor is set to `powersave`, the CPU can drop to low clock speeds during brief idle moments and take time to boost back up. GameMode switches the governor to `performance` for the duration of the game session, keeping all cores at a stable base clock. This reduces scheduling jitter, prevents thread migration overhead, and ensures consistent CPU availability — especially noticeable during loading screens and the first few minutes of gameplay.
 
 **Step 1 — Enable GameMode daemon (survives reboots):**
 
@@ -119,8 +118,10 @@ All entries should show `Passed`.
 Right-click FH6 → Properties → Launch Options:
 
 ```
-PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CACHE=1 PROTON_NVIDIA_LIBS=1 PROTON_USE_NTSYNC=1 PROTON_ENABLE_NVAPI=1 PROTON_ENABLE_NGX_UPDATER=1 PROTON_VKD3D_HEAP=1 VKD3D_CONFIG=descriptor_heap gamescope -f -W 1920 -H 1080 -r 180 --mangoapp --force-grab-cursor --adaptive-sync -- gamemoderun %command%
+MANGOHUD=1 PROTON_ENABLE_WAYLAND=1 PROTON_DLSS_UPGRADE=1 PROTON_LOCAL_SHADER_CACHE=1 PROTON_NVIDIA_LIBS=1 PROTON_USE_NTSYNC=1 PROTON_ENABLE_NVAPI=1 PROTON_ENABLE_NGX_UPDATER=1 PROTON_VKD3D_HEAP=1 VKD3D_CONFIG=descriptor_heap gamescope -f -W 1920 -H 1080 -r 180 --force-grab-cursor --adaptive-sync -- gamemoderun %command%
 ```
+
+> **`--mangoapp` vs `MANGOHUD=1`:** Do **not** use `--mangoapp` in Gamescope. In Gamescope's mangoapp mode the overlay runs as a separate process synchronized with Gamescope's frame output — meaning it samples 60 times per second regardless of any `update_rate` config, consuming ~30% of a CPU core and causing periodic frametime spikes (the "EKG Frametime"). `MANGOHUD=1` injects directly into the game process, respects the config, and uses minimal CPU.
 
 > **`PROTON_USE_NTSYNC=1`** requires a kernel with NTsync support. Without it the argument is silently ignored — no errors.
 
